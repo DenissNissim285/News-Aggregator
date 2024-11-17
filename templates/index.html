@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>Personalized News Update Aggregator</title>
+    <script>
+        console.log("JavaScript Loaded");
+
+       // async function fetchNewsData() {
+           // try {
+               // console.log("Button clicked!");
+               // const response = await fetch('/fetch-news');
+                // פונקציה לשליחת בקשה עם קטגוריות שנבחרו
+                async function fetchNewsData() {
+    try {
+        console.log("Button clicked!");
+
+        const selectedCategories = [];
+        const checkboxes = document.querySelectorAll('input[name="categories"]:checked');
+        checkboxes.forEach((checkbox) => {
+            selectedCategories.push(checkbox.value);
+        });
+
+        const url = new URL('/get-matched-news', window.location.origin);
+        url.searchParams.append('categories', selectedCategories);
+
+        console.log("Sending request to:", url.toString());  // הודעת לוג נוספת
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log("Received data:", data);
+        document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+    } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+    }
+}
+
+
+    </script>
+</head>
+<body>
+    <h1>Hello Deniss, welcome to the news site</h1>
+     <!-- טופס לבחירת קטגוריות -->
+     <h3>Choose a category</h3>
+     <form id="categoriesForm">
+         <input type="checkbox" id="technology" name="categories" value="technology">
+         <label for="technology">technology</label><br>
+ 
+         <input type="checkbox" id="sports" name="categories" value="sports">
+         <label for="sports">sport</label><br>
+ 
+         <input type="checkbox" id="health" name="categories" value="health">
+         <label for="health">health</label><br>
+ 
+         <input type="checkbox" id="politics" name="categories" value="politics">
+         <label for="politics">politics</label><br>
+ 
+         <input type="checkbox" id="business" name="categories" value="business">
+         <label for="business">business</label><br>
+ 
+         <input type="checkbox" id="travel" name="categories" value="travel">
+         <label for="travel">travel</label><br><br>
+ 
+         <button type="button" onclick="fetchNewsData()">Show news</button>
+     </form>
+ 
+     <pre id="output"></pre>
+ 
+     <script>
+         console.log("JavaScript Loaded");
+     </script>
+ </body>
+ </html>
