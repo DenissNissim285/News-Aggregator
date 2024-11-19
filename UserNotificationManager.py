@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 print("Loaded API Key:", NEWS_API_KEY)  # Check that the key is loaded
-
+MY_API_KEY= os.getenv("MY_API_KEY")
 app = FastAPI()
 print("Starting the server...")
 templates = Jinja2Templates(directory="C:/Users/User/Desktop/Final_Project/templates")
@@ -73,7 +73,7 @@ async def get_matched_news(request: Request, categories: list[str] = Query([])):
         users = session.query(User).all()
         print("Fetched users:", users)
           
-        user_news = await news_sorting(news, users)  # Call to engine
+        user_news = await news_sorting(news, users, MY_API_KEY)  # Call to engine
         
         print("Filtered news:", user_news)
 
@@ -108,7 +108,7 @@ async def update_preferences_endpoint(request: UpdatePreferencesRequest):
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Internal Server Error: {str(e)}"})
     # Calling the engine with updated preferences
-    user_news = await news_sorting(news, users)  
+    user_news = await news_sorting(news, users, MY_API_KEY) 
     
 
 # The structure of the request to create a new user
