@@ -1,4 +1,4 @@
-# קטגוריות ומילות מפתח עבור כל אחת
+# Categories and keywords for each
 CATEGORY_KEYWORDS = {
     "technology": ["ai", "cloud", "blockchain", "robotics", "programming", "cybersecurity", "apple", "google", "microsoft", "android", "iphone", "software", "hardware", "innovation", "tech", "gadget", "machine learning", "data science", "virtual reality", "internet of things", "5G", "cyber attack", "automation", "startup", "tech news"],
     "science": ["science", "research", "study", "biology", "physics", "astronomy", "chemistry", "space", "experiment", "genetics", "medicine", "genomics","chemistry", "molecules", "atoms", "chemical reactions", "organic chemistry", "inorganic chemistry", "pharmaceuticals", "catalysts", "periodic table", "bonding", "elements", "compounds", "mixtures", "solutions", "acids", "bases", "pH", "stoichiometry", "chemical engineering", "polymer" "environment", "earth", "climate", "fossils", "evolution", "natural selection", "molecules", "atoms", "biotechnology", "lab", "scientific method", "earthquake", "oceanography"],
@@ -8,12 +8,16 @@ CATEGORY_KEYWORDS = {
     "general": ["news", "world", "events", "politics", "culture", "society", "international", "breaking", "current affairs", "worldwide", "headline", "update", "media", "history", "education", "government", "justice", "rights", "law", "human rights", "elections", "corruption", "news updates", "social media", "opinion", "public policy", "international relations", "global warming", "social issues"]
 }
 
-
 def extract_keywords(text):
     words = text.lower().split()
     return set(words)
 
 async def news_sorting(news, users):
+    """
+    The function is responsible for sorting news articles according to user preferences.
+    It receives a list of news and a list of users and returns an object containing the 
+    sponsored news for each user according to their preferences.
+    """
     user_news = {}
 
     for user in users:
@@ -24,29 +28,30 @@ async def news_sorting(news, users):
         matched_news = []
 
         for article in news.get("articles", []):
-            # בדיקה אם כל אחד מהשדות לא None לפני שנעבוד איתם
+            # Check if each of the fields is not None before we work with them
             title = article.get("title", "").lower() if article.get("title") else ""
             description = article.get("description", "").lower() if article.get("description") else ""
             content = article.get("content", "").lower() if article.get("content") else ""
 
-            # אם לא נמצא טקסט, נמשיך למאמר הבא
+           # If no text is found, we will continue to the next article
             if not (title or description or content):
                 continue
 
             text = f"{title} {description} {content}"
 
-            # חילוץ מילות מפתח מהכתבה
+           # Extract keywords from the article
             keywords = extract_keywords(text)
 
-            # סיווג הכתבה לפי מילות המפתח
             for pref in preferences:
-                for keyword in keywords:
-                    # אם יש חפיפה עם אחת מהמילים בקטגוריה
-                    for category, category_keywords in CATEGORY_KEYWORDS.items():
-                        if pref.lower() == category and keyword in category_keywords:
+                if pref.lower() in CATEGORY_KEYWORDS:
+                    category_keywords = CATEGORY_KEYWORDS[pref.lower()]
+                    for keyword in category_keywords:
+                       # If the word is in the article content, add the article to the list
+                        if keyword in text:
                             matched_news.append(article)
-                            break  # אם מצאנו חפיפה, נמשיך לכתבה הבאה
+                            break  
 
+        # Create a list of articles that are relevant to the user
         user_news[email] = {
             "id": user_id,
             "username": username,

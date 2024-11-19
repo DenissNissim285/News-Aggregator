@@ -6,7 +6,7 @@
     <script>
         console.log("JavaScript Loaded");
 
-        // פונקציה לעדכון העדפות המשתמש
+        // Function to update user preferences
         async function updatePreferences() {
             try {
                 console.log("Updating preferences...");
@@ -23,7 +23,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        email: 'deniss4293@gmail.com',  // כאן יש להחליף במייל של המשתמש
+                        email: 'deniss4293@gmail.com',  
                         preferences: selectedCategories
                     })
                 });
@@ -40,16 +40,15 @@
             }
         }
 
-        // פונקציה שמוציאה רק את הטייטל מתוך החדשות הממויינות
+        // A function that extracts only the title from the sorted news
         function getTitle(newsData) {
-            // נניח ש-newsData הוא המידע שמגיע עם האימייל
             if (newsData && newsData.news && Array.isArray(newsData.news) && newsData.news.length > 0) {
-                return newsData.news[0].title;  // מחזירים את הטייטל של הניווז הראשון
+                return newsData.news[0].title;  // Return the title of the first
             }
             return null;
         }
 
-        // פונקציה לשליחת חדשות במייל
+        // Function to send news by email
         async function sendNewsEmail(email, userNews) {
             try {
                 console.log("Sending news to email...");
@@ -73,7 +72,8 @@
             }
         }
 
-        // פונקציה לשליחת בקשה עם קטגוריות שנבחרו והצגת החדשות
+        //Send a request to the server to receive news that matches the user's preferences
+        // and send the response for display on the HTML page.
         async function fetchNewsData() {
             try {
                 console.log("Button clicked!");
@@ -98,10 +98,10 @@
                 console.log("Received data:", data);
                 document.getElementById('output').innerText = JSON.stringify(data, null, 2);
 
-                // בדוק אם יש חדשות לשלוח
+                // Check if there is news to send
                 const userNewsData = data['deniss4293@gmail.com'];
                 if (userNewsData && userNewsData.news && userNewsData.news.length > 0) {
-                    const userNews = userNewsData.news.map(news => news.title);  // אחזר רק את הכותרת של החדשות
+                    const userNews = userNewsData.news.map(news => news.title);  // Just the title of the news
                     console.log("news to send")
                     console.log(userNews)
                     await sendNewsEmail('deniss4293@gmail.com', userNews);
@@ -118,7 +118,7 @@
 </head>
 <body>
     <h1>Hello Deniss, welcome to the news site</h1>
-    <!-- טופס לבחירת קטגוריות -->
+    <!-- Category selection form -->
     <h3>Choose a category</h3>
     <form id="categoriesForm">
         <input type="checkbox" id="technology" name="categories" value="technology">
