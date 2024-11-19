@@ -1,0 +1,51 @@
+PS C:\Users\User\Desktop\Final_Project> $body = @{
+>>     username = "Alice"
+>>     preferences = @("technology", "health", "sports")
+>> }
+>>
+>> Invoke-WebRequest -Uri "http://127.0.0.1:8000/set-preferences" `
+>>     -Method POST `
+>>     -Body ($body | ConvertTo-Json -Depth 10) `
+>>     -ContentType "application/json"
+>> 
+   | ConvertTo-Json -Depth 10) `\x0a    -ContentType "application/json"\x0a;09a8d774-6e79-4aaInvoke-WebRequest : {"message":"Internal Server Error: local variable 'user_manager' 
+referenced before assignment"}
+At line:7 char:1
++ Invoke-WebRequest -Uri "http://127.0.0.1:8000/set-preferences" `
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (System.Net.HttpWebRequest:HttpWebRequest)   
+   [Invoke-WebRequest], WebException
+    + FullyQualifiedErrorId : WebCmdletWebResponseException,Microsoft.PowerShell.Commands.I  
+   nvokeWebRequestCommand
+PS C:\Users\User\Desktop\Final_Project> $body = @{
+>>     username = "Alice"
+>>     preferences = @("technology", "health", "sports")
+>> }
+>>
+>>
+>> Invoke-WebRequest -Uri "http://127.0.0.1:8000/set-preferences" `
+>>     -Method POST `
+>>     -Body ($body | ConvertTo-Json -Depth 10) `
+>> 
+   | ConvertTo-Json -Depth 10) `\x0a    -ContentType "application/json"\x0a;09a8d774-6e79-4aa8-9d19-4a101a32d796
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"message":"User Alice added successfully","user":{"username":"Alice","e 
+                    mail":"alice@example.com","preferences":"technology,health,sports"}}     
+RawContent        : HTTP/1.1 200 OK
+                    Content-Length: 140
+                    Content-Type: application/json
+                    Date: Sun, 17 Nov 2024 23:36:05 GMT
+                    Server: uvicorn
+
+                    {"message":"User Alice added
+                    successfully","user":{"username":"Alice","ema...
+Forms             : {}
+Headers           : {[Content-Length, 140], [Content-Type, application/json], [Date, Sun,    
+                    17 Nov 2024 23:36:05 GMT], [Server, uvicorn]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : System.__ComObject
+RawContentLength  : 140

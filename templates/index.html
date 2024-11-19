@@ -6,71 +6,144 @@
     <script>
         console.log("JavaScript Loaded");
 
-       // async function fetchNewsData() {
-           // try {
-               // console.log("Button clicked!");
-               // const response = await fetch('/fetch-news');
-                // פונקציה לשליחת בקשה עם קטגוריות שנבחרו
-                async function fetchNewsData() {
-    try {
-        console.log("Button clicked!");
+        // פונקציה לעדכון העדפות המשתמש
+        async function updatePreferences() {
+            try {
+                console.log("Updating preferences...");
 
-        const selectedCategories = [];
-        const checkboxes = document.querySelectorAll('input[name="categories"]:checked');
-        checkboxes.forEach((checkbox) => {
-            selectedCategories.push(checkbox.value);
-        });
+                const selectedCategories = [];
+                const checkboxes = document.querySelectorAll('input[name="categories"]:checked');
+                checkboxes.forEach((checkbox) => {
+                    selectedCategories.push(checkbox.value);
+                });
 
-        const url = new URL('/get-matched-news', window.location.origin);
-        url.searchParams.append('categories', selectedCategories);
+                const response = await fetch('/update-preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'deniss4293@gmail.com',  // כאן יש להחליף במייל של המשתמש
+                        preferences: selectedCategories
+                    })
+                });
 
-        console.log("Sending request to:", url.toString());  // הודעת לוג נוספת
+                if (!response.ok) {
+                    throw new Error('Failed to update preferences');
+                }
 
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+                const data = await response.json();
+                console.log("Preferences updated successfully:", data);
+                document.getElementById('output').innerText = 'Preferences updated successfully: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('There was a problem with the update operation:', error);
+            }
         }
-        const data = await response.json();
-        console.log("Received data:", data);
-        document.getElementById('output').innerText = JSON.stringify(data, null, 2);
-    } catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
-    }
-}
 
+        // פונקציה שמוציאה רק את הטייטל מתוך החדשות הממויינות
+        function getTitle(newsData) {
+            // נניח ש-newsData הוא המידע שמגיע עם האימייל
+            if (newsData && newsData.news && Array.isArray(newsData.news) && newsData.news.length > 0) {
+                return newsData.news[0].title;  // מחזירים את הטייטל של הניווז הראשון
+            }
+            return null;
+        }
 
+        // פונקציה לשליחת חדשות במייל
+        async function sendNewsEmail(email, userNews) {
+            try {
+                console.log("Sending news to email...");
+
+                const response = await fetch('/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email, news: userNews }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send email');
+                }
+
+                const data = await response.json();
+                console.log("Email sent successfully:", data);
+            } catch (error) {
+                console.error('There was a problem sending the email:', error);
+            }
+        }
+
+        // פונקציה לשליחת בקשה עם קטגוריות שנבחרו והצגת החדשות
+        async function fetchNewsData() {
+            try {
+                console.log("Button clicked!");
+
+                const selectedCategories = [];
+                const checkboxes = document.querySelectorAll('input[name="categories"]:checked');
+                checkboxes.forEach((checkbox) => {
+                    selectedCategories.push(checkbox.value);
+                });
+
+                const url = new URL('/get-matched-news', window.location.origin);
+                selectedCategories.forEach(category => url.searchParams.append('categories', category));
+
+                console.log("Sending request to:", url.toString());
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                console.log("Received data:", data);
+                document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+
+                // בדוק אם יש חדשות לשלוח
+                const userNewsData = data['deniss4293@gmail.com'];
+                if (userNewsData && userNewsData.news && userNewsData.news.length > 0) {
+                    const userNews = userNewsData.news.map(news => news.title);  // אחזר רק את הכותרת של החדשות
+                    console.log("news to send")
+                    console.log(userNews)
+                    await sendNewsEmail('deniss4293@gmail.com', userNews);
+                } else {
+                    console.log("No news found to send.");
+                    document.getElementById('output').innerText = "No news found to send.";
+                }
+
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        }
     </script>
 </head>
 <body>
     <h1>Hello Deniss, welcome to the news site</h1>
-     <!-- טופס לבחירת קטגוריות -->
-     <h3>Choose a category</h3>
-     <form id="categoriesForm">
-         <input type="checkbox" id="technology" name="categories" value="technology">
-         <label for="technology">technology</label><br>
- 
-         <input type="checkbox" id="sports" name="categories" value="sports">
-         <label for="sports">sport</label><br>
- 
-         <input type="checkbox" id="health" name="categories" value="health">
-         <label for="health">health</label><br>
- 
-         <input type="checkbox" id="politics" name="categories" value="politics">
-         <label for="politics">politics</label><br>
- 
-         <input type="checkbox" id="business" name="categories" value="business">
-         <label for="business">business</label><br>
- 
-         <input type="checkbox" id="travel" name="categories" value="travel">
-         <label for="travel">travel</label><br><br>
- 
-         <button type="button" onclick="fetchNewsData()">Show news</button>
-     </form>
- 
-     <pre id="output"></pre>
- 
-     <script>
-         console.log("JavaScript Loaded");
-     </script>
- </body>
- </html>
+    <!-- טופס לבחירת קטגוריות -->
+    <h3>Choose a category</h3>
+    <form id="categoriesForm">
+        <input type="checkbox" id="technology" name="categories" value="technology">
+        <label for="technology">technology</label><br>
+
+        <input type="checkbox" id="science" name="categories" value="science">
+        <label for="science">science</label><br>
+
+        <input type="checkbox" id="health" name="categories" value="health">
+        <label for="health">health</label><br>
+
+        <input type="checkbox" id="Sports" name="categories" value="Sports">
+        <label for="Sports">Sports</label><br>
+
+        <input type="checkbox" id="business" name="categories" value="business">
+        <label for="business">business</label><br>
+
+        <input type="checkbox" id="general" name="categories" value="general">
+        <label for="general">general</label><br><br>
+
+        <button type="button" onclick="updatePreferences()">Update Preferences</button>
+        <button type="button" onclick="fetchNewsData()">Show news</button>
+    </form>
+
+    <pre id="output"></pre>
+
+</body>
+</html>

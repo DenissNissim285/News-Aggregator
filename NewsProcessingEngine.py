@@ -1,19 +1,17 @@
+# קטגוריות ומילות מפתח עבור כל אחת
+CATEGORY_KEYWORDS = {
+    "technology": ["ai", "cloud", "blockchain", "robotics", "programming", "cybersecurity", "apple", "google", "microsoft", "android", "iphone", "software", "hardware", "innovation", "tech", "gadget", "machine learning", "data science", "virtual reality", "internet of things", "5G", "cyber attack", "automation", "startup", "tech news"],
+    "science": ["science", "research", "study", "biology", "physics", "astronomy", "chemistry", "space", "experiment", "genetics", "medicine", "genomics","chemistry", "molecules", "atoms", "chemical reactions", "organic chemistry", "inorganic chemistry", "pharmaceuticals", "catalysts", "periodic table", "bonding", "elements", "compounds", "mixtures", "solutions", "acids", "bases", "pH", "stoichiometry", "chemical engineering", "polymer" "environment", "earth", "climate", "fossils", "evolution", "natural selection", "molecules", "atoms", "biotechnology", "lab", "scientific method", "earthquake", "oceanography"],
+    "health": ["health", "hospital", "doctor", "fitness", "medicine", "virus", "disease", "healthcare", "wellness", "mental health", "exercise", "nutrition", "vaccine", "pandemic", "public health", "cardiology", "oncology", "surgery", "health tips", "diagnosis", "prevention", "hygiene", "treatment", "rehabilitation", "chronic illness", "pharmacy"],
+    "sports": ["sport", "game", "football", "soccer", "basketball", "tennis", "olympics", "athletics", "rugby", "golf", "swimming", "MMA", "baseball", "hockey", "boxing", "championship", "team", "competition", "win", "match", "coach", "player", "goal", "fifa", "nba", "sports news", "olympic games", "track and field", "formula 1", "sports injuries"],
+    "business": ["business", "industry", "company", "finance", "economy", "stocks", "investment", "startup", "market", "management", "entrepreneur", "profit", "corporate", "sales", "marketing", "strategy", "growth", "startup culture", "investment strategies", "business news", "merger", "acquisition", "business model", "economics", "leadership", "financial analysis", "small business", "brand", "advertising", "capital", "business development", "banking"],
+    "general": ["news", "world", "events", "politics", "culture", "society", "international", "breaking", "current affairs", "worldwide", "headline", "update", "media", "history", "education", "government", "justice", "rights", "law", "human rights", "elections", "corruption", "news updates", "social media", "opinion", "public policy", "international relations", "global warming", "social issues"]
+}
 
-import spacy
-
-# טוען את המודל של spaCy (אפשר להוריד את המודל עם pip install spacy)
-nlp = spacy.load("en_core_web_sm")
 
 def extract_keywords(text):
-    doc = nlp(text)
-    
-    # חילוץ ישויות (entities) שמייצגות אנשים, ארגונים, תאריכים וכו'
-    keywords = [ent.text.lower() for ent in doc.ents]
-    
-    # חילוץ מילות עצם ותארים
-    keywords.extend([token.text.lower() for token in doc if token.pos_ in ['NOUN', 'ADJ']])
-    
-    return keywords
+    words = text.lower().split()
+    return set(words)
 
 async def news_sorting(news, users):
     user_news = {}
@@ -26,20 +24,29 @@ async def news_sorting(news, users):
         matched_news = []
 
         for article in news.get("articles", []):
-            title = article.get("title", "")
-            description = article.get("description", "")
-            text = f"{title} {description}"
+            # בדיקה אם כל אחד מהשדות לא None לפני שנעבוד איתם
+            title = article.get("title", "").lower() if article.get("title") else ""
+            description = article.get("description", "").lower() if article.get("description") else ""
+            content = article.get("content", "").lower() if article.get("content") else ""
+
+            # אם לא נמצא טקסט, נמשיך למאמר הבא
+            if not (title or description or content):
+                continue
+
+            text = f"{title} {description} {content}"
+
+            # חילוץ מילות מפתח מהכתבה
             keywords = extract_keywords(text)
 
-            print(f"Keywords for article '{title}': {keywords}")
-
+            # סיווג הכתבה לפי מילות המפתח
             for pref in preferences:
-                if any(pref.lower() in keyword or keyword in pref.lower() for keyword in keywords):
-                    if article not in matched_news:
-                        print(f"Matched article: {title}")
-                        matched_news.append(article)
+                for keyword in keywords:
+                    # אם יש חפיפה עם אחת מהמילים בקטגוריה
+                    for category, category_keywords in CATEGORY_KEYWORDS.items():
+                        if pref.lower() == category and keyword in category_keywords:
+                            matched_news.append(article)
+                            break  # אם מצאנו חפיפה, נמשיך לכתבה הבאה
 
-        print(f"Matched news for {email}: {matched_news}")
         user_news[email] = {
             "id": user_id,
             "username": username,
@@ -48,5 +55,4 @@ async def news_sorting(news, users):
             "news": matched_news,
         }
 
-    print("User news:", user_news)
     return user_news

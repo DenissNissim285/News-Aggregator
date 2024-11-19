@@ -1,0 +1,29 @@
+ Invoke-WebRequest -Uri "http://127.0.0.1:8000/update-
+preferences" `
+>>     -Method PUT `
+>>     -Headers @{ "Content-Type" = "application/json" } `
+>>     -Body '{"email": "deniss4293@gmail.com", "preferences": ["business"]}'
+>> 
+   -808c-ea661e8472c6
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"message":"Preferences updated successfully","user":{"email":"deniss429 
+                    3@gmail.com","preferences":"business"}}
+RawContent        : HTTP/1.1 200 OK
+                    Content-Length: 111
+                    Content-Type: application/json
+                    Date: Sun, 17 Nov 2024 23:22:29 GMT
+                    Server: uvicorn
+
+                    {"message":"Preferences updated
+                    successfully","user":{"email":"deniss4293@...
+Forms             : {}
+Headers           : {[Content-Length, 111], [Content-Type, application/json], [Date, Sun,    
+                    17 Nov 2024 23:22:29 GMT], [Server, uvicorn]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : System.__ComObject
+RawContentLength  : 111
+
