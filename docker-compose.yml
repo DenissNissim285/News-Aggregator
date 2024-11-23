@@ -1,0 +1,93 @@
+
+services:
+  engine:
+    build:
+      context: .
+      dockerfile: ./engine/Dockerfile
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./engine:/app/engine
+      - shared-db:/app/db
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - manager
+    command: ["python", "/app/engine/engine.py"]
+
+  hfaccessor:
+    build:
+      context: .
+      dockerfile: ./hfaccessor/Dockerfile
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./hfaccessor:/app/hfaccessor
+      - shared-db:/app/db
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - engine
+    command: ["python", "/app/hfaccessor/HFAccessor.py"]
+
+  emailaccessor:
+    build:
+      context: .
+      dockerfile: ./emailaccessor/Dockerfile
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./emailaccessor:/app/emailaccessor
+      - shared-db:/app/db
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - manager
+    command: ["python", "/app/emailaccessor/EmailAccessor.py"]
+
+  newsaccessor:
+    build:
+      context: .
+      dockerfile: ./newsaccessor/Dockerfile
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./newsaccessor:/app/newsaccessor
+      - shared-db:/app/db
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - manager
+    command: ["python", "/app/newsaccessor/NewsAccessor.py"]
+
+  useraccessor:
+    build:
+      context: .
+      dockerfile: ./useraccessor/Dockerfile
+    ports:
+      - "8006:8000"
+    volumes:
+      - ./useraccessor:/app/useraccessor
+      - shared-db:/app/db
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - manager
+    command: ["python", "/app/useraccessor/UserAccessor.py"]
+
+  manager:
+    build:
+      context: .
+      dockerfile: ./manager/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./manager:/app/manager
+      - shared-db:/app/db
+      - ./templates:/app/templates
+    environment:
+      - PYTHONPATH=/app
+    command: ["python", "/app/manager/manager.py"]
+
+volumes:
+  shared-db:

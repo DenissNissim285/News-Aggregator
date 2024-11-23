@@ -1,36 +1,42 @@
 from typing import List
-from fastapi import BackgroundTasks, FastAPI, Query, Request, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Path, Query, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 #from NewsProcessingEngine import DataManager
 from dotenv import load_dotenv
 import os
 import logging
-from accessors.UserAccessor import  User, add_user, update_preferences
-from accessors.NewsAccessor import fetch_news_data
-from accessors.EmailAccessor import send_news_to_users
+
+import uvicorn
+from useraccessor.UserAccessor import  User, add_user, update_preferences
+from newsaccessor.NewsAccessor import fetch_news_data
+from emailaccessor.EmailAccessor import send_news_to_users
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
-from NewsProcessingEngine import news_sorting 
+from engine.engine import news_sorting 
 from pydantic import BaseModel
 
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 print("Loaded API Key:", NEWS_API_KEY)  # Check that the key is loaded
 MY_API_KEY= os.getenv("MY_API_KEY")
+
 app = FastAPI()
-print("Starting the server...")
-templates = Jinja2Templates(directory="C:/Users/User/Desktop/Final_Project/templates")
+templates = Jinja2Templates(directory="/app/templates")
+
+#print("Starting the server...")
+#templates = Jinja2Templates(directory="C:/Users/User/Desktop/Final_Project/templates")
 
 #data_manager = DataManager()
 
-logging.basicConfig(level=logging.DEBUG) # Display logs at DEBUG level
+#logging.basicConfig(level=logging.DEBUG) # Display logs at DEBUG level
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+     print("Home route accessed")
+     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/fetch-news", response_class=JSONResponse)
 async def fetch_news():
@@ -56,8 +62,7 @@ if updated_user:
 @app.get("/get-matched-news", response_class=JSONResponse)
 async def get_matched_news(request: Request, categories: list[str] = Query([])):
     try:
-        print(f"Categories received: {categories}")  # הדפסת הקטגוריות שנשלחו
-
+        print(f"Categories received: {categories}") 
         if not categories:
             return JSONResponse(status_code=400, content={"message": "No categories selected"})
 
@@ -172,3 +177,6 @@ async def send_news_email(request: NewsEmailRequest, background_tasks: Backgroun
         return {"status": "accepted", "message": "Emails are being processed and sent"}
     except Exception as e:
         return {"status": "error", "message": f"Error: {str(e)}"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

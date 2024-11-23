@@ -1,4 +1,4 @@
-from accessors.HFAccessor import fetch_sorted_news_from_hugging_face
+from hfaccessor.HFAccessor import fetch_sorted_news_from_hugging_face
 
 async def news_sorting(news, users, hugging_face_api_key):
     """
