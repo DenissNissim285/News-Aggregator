@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 import os
 import logging
-
+import dapr.clients
 import uvicorn
 from useraccessor.UserAccessor import  User, add_user, update_preferences
 from newsaccessor.NewsAccessor import fetch_news_data

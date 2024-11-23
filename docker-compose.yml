@@ -1,5 +1,50 @@
-
 services:
+  ############################
+  # Manager app + Dapr sidecar
+  ############################
+  manager:
+    build:
+      context: .
+      dockerfile: ./manager/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./manager:/app/manager
+      - shared-db:/app/db
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - shared-db
+      - rabbitmq
+    networks:
+      - network-dapr
+
+  manager-dapr:
+    image: "daprio/daprd:edge"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    command: ["./daprd",
+        "-app-port", "8000",
+        "-app-id", "manager",
+        "-app-protocol", "http",
+        "-dapr-http-port", "3500",
+        "-components-path", "./dapr/components",
+        "-config", "./dapr/config.yaml",
+        ]
+    volumes:
+      - ./dapr:/dapr
+    depends_on:
+      - manager
+    networks:
+      - network-dapr
+
+  ############################
+  # Engine app + Dapr sidecar
+  ############################
   engine:
     build:
       context: .
@@ -13,8 +58,35 @@ services:
       - PYTHONPATH=/app
     depends_on:
       - manager
-    command: ["python", "/app/engine/engine.py"]
+    networks:
+      - network-dapr
 
+  engine-dapr:
+    image: "daprio/daprd:edge"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    command: ["./daprd",
+        "-app-port", "8000",
+        "-app-id", "engine",
+        "-app-protocol", "http",
+        "-dapr-http-port", "3500",
+        "-components-path", "./dapr/components",
+        "-config", "./dapr/config.yaml",
+        ]
+    volumes:
+      - ./dapr:/dapr
+    depends_on:
+      - engine
+    networks:
+      - network-dapr
+
+  ############################
+  # HFAccessor app + Dapr sidecar
+  ############################
   hfaccessor:
     build:
       context: .
@@ -28,8 +100,35 @@ services:
       - PYTHONPATH=/app
     depends_on:
       - engine
-    command: ["python", "/app/hfaccessor/HFAccessor.py"]
+    networks:
+      - network-dapr
 
+  hfaccessor-dapr:
+    image: "daprio/daprd:edge"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    command: ["./daprd",
+        "-app-port", "8000",
+        "-app-id", "hfaccessor",
+        "-app-protocol", "http",
+        "-dapr-http-port", "3500",
+        "-components-path", "./dapr/components",
+        "-config", "./dapr/config.yaml",
+        ]
+    volumes:
+      - ./dapr:/dapr
+    depends_on:
+      - hfaccessor
+    networks:
+      - network-dapr
+
+  ############################
+  # EmailAccessor app + Dapr sidecar
+  ############################
   emailaccessor:
     build:
       context: .
@@ -43,8 +142,35 @@ services:
       - PYTHONPATH=/app
     depends_on:
       - manager
-    command: ["python", "/app/emailaccessor/EmailAccessor.py"]
+    networks:
+      - network-dapr
 
+  emailaccessor-dapr:
+    image: "daprio/daprd:edge"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    command: ["./daprd",
+        "-app-port", "8000",
+        "-app-id", "emailaccessor",
+        "-app-protocol", "http",
+        "-dapr-http-port", "3500",
+        "-components-path", "./dapr/components",
+        "-config", "./dapr/config.yaml",
+        ]
+    volumes:
+      - ./dapr:/dapr
+    depends_on:
+      - emailaccessor
+    networks:
+      - network-dapr
+
+  ############################
+  # NewsAccessor app + Dapr sidecar
+  ############################
   newsaccessor:
     build:
       context: .
@@ -58,8 +184,35 @@ services:
       - PYTHONPATH=/app
     depends_on:
       - manager
-    command: ["python", "/app/newsaccessor/NewsAccessor.py"]
+    networks:
+      - network-dapr
 
+  newsaccessor-dapr:
+    image: "daprio/daprd:edge"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    command: ["./daprd",
+        "-app-port", "8000",
+        "-app-id", "newsaccessor",
+        "-app-protocol", "http",
+        "-dapr-http-port", "3500",
+        "-components-path", "./dapr/components",
+        "-config", "./dapr/config.yaml",
+        ]
+    volumes:
+      - ./dapr:/dapr
+    depends_on:
+      - newsaccessor
+    networks:
+      - network-dapr
+
+  ############################
+  # UserAccessor app + Dapr sidecar
+  ############################
   useraccessor:
     build:
       context: .
@@ -73,21 +226,59 @@ services:
       - PYTHONPATH=/app
     depends_on:
       - manager
-    command: ["python", "/app/useraccessor/UserAccessor.py"]
+    networks:
+      - network-dapr
 
-  manager:
-    build:
-      context: .
-      dockerfile: ./manager/Dockerfile
-    ports:
-      - "8000:8000"
+  useraccessor-dapr:
+    image: "daprio/daprd:edge"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    command: ["./daprd",
+        "-app-port", "8000",
+        "-app-id", "useraccessor",
+        "-app-protocol", "http",
+        "-dapr-http-port", "3500",
+        "-components-path", "./dapr/components",
+        "-config", "./dapr/config.yaml",
+        ]
     volumes:
-      - ./manager:/app/manager
-      - shared-db:/app/db
-      - ./templates:/app/templates
+      - ./dapr:/dapr
+    depends_on:
+      - useraccessor
+    networks:
+      - network-dapr
+
+  ############################
+  # RabbitMQ
+  ############################
+  rabbitmq:
+    image: "rabbitmq:management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - network-dapr 
+
+  ############################
+  # SQLite Database
+  ############################
+  shared-db:
+    image: python:3.9-slim
     environment:
-      - PYTHONPATH=/app
-    command: ["python", "/app/manager/manager.py"]
+      - DATABASE_URL=sqlite:///./users.db
+    volumes:
+      - ./data:/app/data
+    networks:
+      - network-dapr
+  
+networks:
+  network-dapr:
+    driver: bridge
 
 volumes:
   shared-db:
+    driver: local
