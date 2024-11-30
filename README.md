@@ -1,3 +1,5 @@
+Personalized News Update Aggregator
+
 As part of a course at Zionet, we were given an assignment to create a microservices-based system.
 The system brings the latest news, selects the most interesting news using AI based on the user's preferences, and sends them updates by email.
 
