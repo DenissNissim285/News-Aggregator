@@ -12,7 +12,6 @@ async def send_news_to_users(user_news: list[dict], background_tasks: Background
 2. An object that manages background tasks to send an email asynchronously
 
 The function returns a list of states for each email
-whether it was sent with news or with a no news message
     """
     statuses = []
 
@@ -25,11 +24,11 @@ whether it was sent with news or with a no news message
             body = "\n".join(news)  # Convert the news list into a single string to be sent to the user
             background_tasks.add_task(send_email, email, subject, body)
             statuses.append(f"Email for {email} scheduled successfully.")
-        else:
-            subject = "No News Available"
-            body = "There are no news updates for your selected categories today. Please check back tomorrow."
-            background_tasks.add_task(send_email, email, subject, body)
-            statuses.append(f"Email for {email} scheduled (no news).")
+        #else:
+           # subject = "No News Available"
+          #  body = "There are no news updates for your selected categories today. Please check back tomorrow."
+           # background_tasks.add_task(send_email, email, subject, body)
+           # statuses.append(f"Email for {email} scheduled (no news).")
 
     return statuses
 
@@ -77,7 +76,7 @@ before starting to send the next one
    # send_email(
         #to_email=test_email,
       #  subject="Test Email",
-       # body="This is a test email from my Python application"
+       # body="test"
   #  )
    # print("Test email sent successfully!")
     

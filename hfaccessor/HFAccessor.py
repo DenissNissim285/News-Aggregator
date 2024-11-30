@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 
 async def fetch_sorted_news_from_hugging_face(article_text, preferences, hugging_face_api_key):

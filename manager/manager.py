@@ -6,7 +6,8 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 import os
 import logging
-import dapr.clients
+#import dapr.clients
+import httpx
 import uvicorn
 from useraccessor.UserAccessor import  User, add_user, update_preferences
 from newsaccessor.NewsAccessor import fetch_news_data
@@ -15,6 +16,50 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 from engine.engine import news_sorting 
 from pydantic import BaseModel
+import pika
+import time
+
+
+def connect_to_rabbitmq():
+    retries = 5
+    while retries > 0:
+        try:
+            print("Attempting to connect to RabbitMQ...")
+            
+            connection_params = pika.ConnectionParameters(
+                host="rabbitmq",
+                port=5672,
+                credentials=pika.PlainCredentials("guest", "guest"),
+                heartbeat=600,  # Keep the connection alive with a heartbeat every 10 minutes
+                blocked_connection_timeout=300  # אפשר זמן לחיבור חסום ל-5 דקות
+            )
+            connection = pika.BlockingConnection(connection_params)
+            channel = connection.channel()
+            print("Connected to RabbitMQ!")
+
+            queue_name = 'my-queue' 
+            channel.queue_declare(queue=queue_name, durable=True)  
+            print(f"Queue '{queue_name}' is ready.")
+
+           # Sending a message to the queue
+            message = "test"  
+            channel.basic_publish(
+                exchange='',  
+                routing_key=queue_name,  
+                body=message,  
+                properties=pika.BasicProperties(
+                    delivery_mode=2, # Makes the message durable, so it won't be lost if RabbitMQ crashes
+                )
+            )
+            print(f"Message sent to queue '{queue_name}': {message}")
+            
+            return channel
+        except Exception as e:
+            print(f"Connection failed: {e}. Retrying in 5 seconds...")
+            retries -= 1
+            time.sleep(5)
+    print("Failed to connect to RabbitMQ after several attempts.")
+    return None
 
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
@@ -26,16 +71,15 @@ templates = Jinja2Templates(directory="/app/templates")
 
 #print("Starting the server...")
 #templates = Jinja2Templates(directory="C:/Users/User/Desktop/Final_Project/templates")
-
 #data_manager = DataManager()
 
-#logging.basicConfig(level=logging.DEBUG) # Display logs at DEBUG level
-
-#logger = logging.getLogger(__name__)
+@app.on_event("startup")
+async def startup_event():
+    connect_to_rabbitmq()
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-     print("Home route accessed")
+     print("Home")
      return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/fetch-news", response_class=JSONResponse)
@@ -70,14 +114,13 @@ async def get_matched_news(request: Request, categories: list[str] = Query([])):
         news = await fetch_news_data()  
         print("Fetched news:", news)
 
-       # If there is no news, send an appropriate reply
+        # If there is no news, send an appropriate reply
         if not news:
             return JSONResponse(status_code=404, content={"message": "No news found"})
 
-  
         users = session.query(User).all()
         print("Fetched users:", users)
-          
+
         user_news = await news_sorting(news, users, MY_API_KEY)  # Call to engine
         
         print("Filtered news:", user_news)
@@ -85,11 +128,21 @@ async def get_matched_news(request: Request, categories: list[str] = Query([])):
         if not user_news:
             return JSONResponse(status_code=404, content={"message": "No news available for the selected categories"})
 
+        # After filtering the news, send a message to RabbitMQ via Dapr
+        async with httpx.AsyncClient() as client:
+         response = await client.post(
+            "http://manager-dapr:3500/v1.0/publish/rabbitmq/my-queue",  # Dapr HTTP API to publish
+            json={"news": user_news}
+        )
+        print(f"News sent to RabbitMQ with status code: {response.status_code}")
+
+        # Return the filtered news as the response
         return JSONResponse(content=user_news)
 
     except Exception as e:
         print(f"Error occurred: {e}")
         return JSONResponse(status_code=500, content={"message": "Internal Server Error"})
+
     
 
 class UpdatePreferencesRequest(BaseModel):
@@ -113,7 +166,7 @@ async def update_preferences_endpoint(request: UpdatePreferencesRequest):
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": f"Internal Server Error: {str(e)}"})
     # Calling the engine with updated preferences
-    user_news = await news_sorting(news, users, MY_API_KEY) 
+ #   user_news = await news_sorting(news, users, MY_API_KEY) 
     
 
 # The structure of the request to create a new user
@@ -169,7 +222,8 @@ async def send_news_email(request: NewsEmailRequest, background_tasks: Backgroun
             return JSONResponse(status_code=400, content={"message": "Invalid request data"})
 
         # Making sure the news is just strings
-        if not all(isinstance(title, str) for title in request.news):
+        for title in request.news:
+          if not isinstance(title, str):
             return JSONResponse(status_code=400, content={"message": "Invalid news format. Titles must be strings."})
 
        # Calling the accessor

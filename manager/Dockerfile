@@ -23,7 +23,7 @@ COPY ./templates /app/templates
 
 
 RUN pip install --no-cache-dir -r /app/manager/requirements.txt
-
+#RUN pip install pika aio_pika
 
 ENV PYTHONPATH="/app"
 

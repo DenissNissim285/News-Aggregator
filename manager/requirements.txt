@@ -6,3 +6,5 @@ sqlalchemy
 pydantic
 httpx
 jinja2
+pika
+aio_pika

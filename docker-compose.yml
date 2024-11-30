@@ -11,34 +11,46 @@ services:
     volumes:
       - ./manager:/app/manager
       - shared-db:/app/db
+      - ./dapr/components:/dapr/components
     environment:
       - PYTHONPATH=/app
     depends_on:
       - shared-db
       - rabbitmq
+      - manager-dapr
+      - newsaccessor
     networks:
       - network-dapr
 
   manager-dapr:
     image: "daprio/daprd:edge"
+    ports:
+      - "3500:3500"
     deploy:
       restart_policy:
         condition: on-failure
         delay: 5s
         max_attempts: 10
         window: 120s
-    command: ["./daprd",
-        "-app-port", "8000",
-        "-app-id", "manager",
-        "-app-protocol", "http",
-        "-dapr-http-port", "3500",
-        "-components-path", "./dapr/components",
-        "-config", "./dapr/config.yaml",
-        ]
+    command: [
+      "./daprd",
+      "-app-id", "manager",
+      "-app-port", "8000",
+      "-app-protocol", "http",
+      "-components-path", "/dapr/components",
+      "-dapr-http-port", "3500",
+      "-dapr-grpc-port", "50001",
+      "-config", "/dapr/config.yaml"
+    ]
     volumes:
       - ./dapr:/dapr
+      - ./dapr/components:/dapr/components
+    environment:
+      - PYTHONPATH=/app
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - manager
+      - shared-db
+      - rabbitmq
     networks:
       - network-dapr
 
@@ -53,7 +65,8 @@ services:
       - "8001:8000"
     volumes:
       - ./engine:/app/engine
-      - shared-db:/app/db
+     # - shared-db:/app/db
+      - ./dapr/components:/dapr/components
     environment:
       - PYTHONPATH=/app
     depends_on:
@@ -63,24 +76,25 @@ services:
 
   engine-dapr:
     image: "daprio/daprd:edge"
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 10
-        window: 120s
-    command: ["./daprd",
-        "-app-port", "8000",
-        "-app-id", "engine",
-        "-app-protocol", "http",
-        "-dapr-http-port", "3500",
-        "-components-path", "./dapr/components",
-        "-config", "./dapr/config.yaml",
-        ]
+    command: 
+      - "./daprd"
+      - "-app-port"
+      - "8000"
+      - "-app-id"
+      - "engine"
+      - "-app-protocol"
+      - "http"
+      - "-dapr-http-port"
+      - "3502"
+      - "-components-path"
+      - "./dapr/components"
+      - "-config"
+      - "./dapr/config.yaml"
     volumes:
       - ./dapr:/dapr
+      - ./dapr/components:/dapr/components
     depends_on:
-      - engine
+      - manager
     networks:
       - network-dapr
 
@@ -96,6 +110,7 @@ services:
     volumes:
       - ./hfaccessor:/app/hfaccessor
       - shared-db:/app/db
+      - ./dapr/components:/dapr/components
     environment:
       - PYTHONPATH=/app
     depends_on:
@@ -115,12 +130,13 @@ services:
         "-app-port", "8000",
         "-app-id", "hfaccessor",
         "-app-protocol", "http",
-        "-dapr-http-port", "3500",
+        "-dapr-http-port", "3503",
         "-components-path", "./dapr/components",
         "-config", "./dapr/config.yaml",
         ]
     volumes:
       - ./dapr:/dapr
+      - ./dapr/components:/dapr/components
     depends_on:
       - hfaccessor
     networks:
@@ -137,11 +153,13 @@ services:
       - "8003:8000"
     volumes:
       - ./emailaccessor:/app/emailaccessor
-      - shared-db:/app/db
+      #- shared-db:/app/db
+      - ./dapr/components:/dapr/components
     environment:
       - PYTHONPATH=/app
     depends_on:
       - manager
+      - rabbitmq
     networks:
       - network-dapr
 
@@ -157,12 +175,13 @@ services:
         "-app-port", "8000",
         "-app-id", "emailaccessor",
         "-app-protocol", "http",
-        "-dapr-http-port", "3500",
+        "-dapr-http-port", "3504",
         "-components-path", "./dapr/components",
         "-config", "./dapr/config.yaml",
         ]
     volumes:
       - ./dapr:/dapr
+      - ./dapr/components:/dapr/components
     depends_on:
       - emailaccessor
     networks:
@@ -176,14 +195,16 @@ services:
       context: .
       dockerfile: ./newsaccessor/Dockerfile
     ports:
-      - "8004:8000"
+      - "8007:8000"
     volumes:
       - ./newsaccessor:/app/newsaccessor
-      - shared-db:/app/db
+      #- shared-db:/app/db
+      - ./dapr/components:/dapr/components
     environment:
       - PYTHONPATH=/app
     depends_on:
-      - manager
+      - rabbitmq
+    #restart: always
     networks:
       - network-dapr
 
@@ -199,14 +220,19 @@ services:
         "-app-port", "8000",
         "-app-id", "newsaccessor",
         "-app-protocol", "http",
-        "-dapr-http-port", "3500",
+        "-dapr-http-port", "3505",
         "-components-path", "./dapr/components",
         "-config", "./dapr/config.yaml",
         ]
     volumes:
       - ./dapr:/dapr
+      - ./dapr/components:/dapr/components
+    environment:
+      - PYTHONPATH=/app
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
     depends_on:
       - newsaccessor
+     # - rabbitmq
     networks:
       - network-dapr
 
@@ -222,6 +248,7 @@ services:
     volumes:
       - ./useraccessor:/app/useraccessor
       - shared-db:/app/db
+      - ./dapr/components:/dapr/components
     environment:
       - PYTHONPATH=/app
     depends_on:
@@ -241,12 +268,13 @@ services:
         "-app-port", "8000",
         "-app-id", "useraccessor",
         "-app-protocol", "http",
-        "-dapr-http-port", "3500",
+        "-dapr-http-port", "3506",
         "-components-path", "./dapr/components",
         "-config", "./dapr/config.yaml",
         ]
     volumes:
       - ./dapr:/dapr
+      - ./dapr/components:/dapr/components
     depends_on:
       - useraccessor
     networks:
@@ -256,7 +284,7 @@ services:
   # RabbitMQ
   ############################
   rabbitmq:
-    image: "rabbitmq:management"
+    image: "rabbitmq:3-management"
     ports:
       - "5672:5672"
       - "15672:15672"
